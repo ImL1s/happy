@@ -35,6 +35,12 @@ export interface Project {
     updatedAt: number;
 }
 
+const encodeProjectKeyPart = (value: string): string => encodeURIComponent(value).replace(/_/g, '%5F');
+
+export function getProjectKeyString(key: ProjectKey): string {
+    return `${encodeProjectKeyPart(key.machineId)}:${encodeProjectKeyPart(key.path)}`;
+}
+
 /**
  * In-memory project manager
  */
@@ -43,13 +49,6 @@ class ProjectManager {
     private projectKeyToId: Map<string, string> = new Map();
     private sessionToProject: Map<string, string> = new Map();
     private nextProjectId = 1;
-
-    /**
-     * Generate a unique key string from machine ID and path
-     */
-    private getProjectKeyString(key: ProjectKey): string {
-        return `${key.machineId}:${key.path}`;
-    }
 
     /**
      * Generate a new unique project ID
@@ -62,7 +61,7 @@ class ProjectManager {
      * Get or create a project for the given key
      */
     private getOrCreateProject(key: ProjectKey, machineMetadata?: MachineMetadata | null): Project {
-        const keyString = this.getProjectKeyString(key);
+        const keyString = getProjectKeyString(key);
         let projectId = this.projectKeyToId.get(keyString);
 
         if (!projectId) {
@@ -179,7 +178,7 @@ class ProjectManager {
         }
 
         // Clean up all references
-        const keyString = this.getProjectKeyString(project.key);
+        const keyString = getProjectKeyString(project.key);
         this.projectKeyToId.delete(keyString);
         this.projects.delete(projectId);
 
@@ -251,7 +250,7 @@ class ProjectManager {
      * Update git status for a project (identified by project key)
      */
     updateProjectGitStatus(projectKey: ProjectKey, gitStatus: GitStatus | null): void {
-        const keyString = this.getProjectKeyString(projectKey);
+        const keyString = getProjectKeyString(projectKey);
         const projectId = this.projectKeyToId.get(keyString);
         
         if (!projectId) {
