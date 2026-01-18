@@ -11,7 +11,7 @@ import { parseStatusSummary, getStatusCounts, isDirty } from './git-parsers/pars
 import { parseStatusSummaryV2, getStatusCountsV2, isDirtyV2, getCurrentBranchV2, getTrackingInfoV2 } from './git-parsers/parseStatusV2';
 import { parseCurrentBranch } from './git-parsers/parseBranch';
 import { parseNumStat, mergeDiffSummaries } from './git-parsers/parseDiff';
-import { projectManager, createProjectKey } from './projectManager';
+import { projectManager, createProjectKey, getProjectKeyString } from './projectManager';
 
 export class GitStatusSync {
     // Map project keys to sync instances
@@ -27,7 +27,7 @@ export class GitStatusSync {
         if (!session?.metadata?.machineId || !session?.metadata?.path) {
             return null;
         }
-        return `${session.metadata.machineId}:${session.metadata.path}`;
+        return getProjectKeyString(createProjectKey(session.metadata.machineId, session.metadata.path));
     }
 
     /**

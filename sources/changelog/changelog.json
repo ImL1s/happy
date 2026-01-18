@@ -1,6 +1,15 @@
 {
   "entries": [
     {
+      "version": 6,
+      "date": "2026-01-17",
+      "summary": "This release improves synchronization reliability for projects with special characters in their folder names, keeping mobile project details up to date.",
+      "changes": [
+        "Fixed project key generation to handle folder names with underscores during sync."
+      ],
+      "rawMarkdown": "## Version 6 - 2026-01-17\n\n\nThis release improves synchronization reliability for projects with special characters in their folder names, keeping mobile project details up to date.\n\n- Fixed project key generation to handle folder names with underscores during sync."
+    },
+    {
       "version": 5,
       "date": "2025-12-22",
       "summary": "This release expands AI agent support and refines the voice experience, while improving markdown rendering for a better chat experience.",
@@ -65,5 +74,5 @@
       "rawMarkdown": "## Version 1 - 2025-05-12\n\n\nWelcome to Happy - your secure, encrypted mobile companion for Claude Code. This inaugural release establishes the foundation for private, powerful AI interactions on the go.\n\n- Implemented end-to-end encrypted session management ensuring complete privacy\n- Integrated intelligent voice assistant with natural conversation capabilities\n- Added experimental file manager with syntax highlighting and tree navigation\n- Built seamless real-time synchronization across all your devices\n- Established native support for iOS, Android, and responsive web interfaces"
     }
   ],
-  "latestVersion": 5
+  "latestVersion": 6
 }

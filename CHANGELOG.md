@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 6 - 2026-01-17
+
+This release improves synchronization reliability for projects with special characters in their folder names, keeping mobile project details up to date.
+
+- Fixed project key generation to handle folder names with underscores during sync.
+
 ## Version 5 - 2025-12-22
 
 This release expands AI agent support and refines the voice experience, while improving markdown rendering for a better chat experience.
