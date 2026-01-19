@@ -404,6 +404,7 @@ export const es: TranslationStructure = {
             claude: 'Claude',
             codex: 'Codex',
             gemini: 'Gemini',
+            opencode: 'OpenCode',
         },
         model: {
             title: 'MODELO',

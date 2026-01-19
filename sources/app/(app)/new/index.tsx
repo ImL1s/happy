@@ -59,7 +59,7 @@ const useProfileMap = (profiles: AIBackendProfile[]) => {
 
 // Environment variable transformation helper
 // Returns ALL profile environment variables - daemon will use them as-is
-const transformProfileToEnvironmentVars = (profile: AIBackendProfile, agentType: 'claude' | 'codex' | 'gemini' = 'claude') => {
+const transformProfileToEnvironmentVars = (profile: AIBackendProfile, agentType: 'claude' | 'codex' | 'gemini' | 'opencode' = 'claude') => {
     // getProfileEnvironmentVariables already returns ALL env vars from profile
     // including custom environmentVariables array and provider-specific configs
     return getProfileEnvironmentVariables(profile);
@@ -310,7 +310,7 @@ function NewSessionWizard() {
         }
         return 'anthropic'; // Default to Anthropic
     });
-    const [agentType, setAgentType] = React.useState<'claude' | 'codex' | 'gemini'>(() => {
+    const [agentType, setAgentType] = React.useState<'claude' | 'codex' | 'gemini' | 'opencode'>(() => {
         // Check if agent type was provided in temp data
         if (tempSessionData?.agentType) {
             // Only allow gemini if experiments are enabled
@@ -367,10 +367,11 @@ function NewSessionWizard() {
     // A duplicate unconditional reset here was removed to prevent race conditions.
 
     const [modelMode, setModelMode] = React.useState<ModelMode>(() => {
-        const validClaudeModes: ModelMode[] = ['default', 'adaptiveUsage', 'sonnet', 'opus'];
-        const validCodexModes: ModelMode[] = ['gpt-5-codex-high', 'gpt-5-codex-medium', 'gpt-5-codex-low', 'gpt-5-minimal', 'gpt-5-low', 'gpt-5-medium', 'gpt-5-high'];
+        const validClaudeModes: ModelMode[] = ['default', 'sonnet', 'opus', 'haiku'];
+        const validCodexModes: ModelMode[] = ['codex', 'codex-mini', 'gpt-4o', 'gpt-4o-mini', 'o1', 'o1-mini', 'o1-pro', 'o3-mini'];
         // Note: 'default' is NOT valid for Gemini - we want explicit model selection
         const validGeminiModes: ModelMode[] = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+        const validOpenCodeModes: ModelMode[] = ['opencode-auto', 'opencode-claude', 'opencode-gpt4', 'opencode-gemini'];
 
         if (lastUsedModelMode) {
             if (agentType === 'codex' && validCodexModes.includes(lastUsedModelMode as ModelMode)) {
@@ -379,9 +380,11 @@ function NewSessionWizard() {
                 return lastUsedModelMode as ModelMode;
             } else if (agentType === 'gemini' && validGeminiModes.includes(lastUsedModelMode as ModelMode)) {
                 return lastUsedModelMode as ModelMode;
+            } else if (agentType === 'opencode' && validOpenCodeModes.includes(lastUsedModelMode as ModelMode)) {
+                return lastUsedModelMode as ModelMode;
             }
         }
-        return agentType === 'codex' ? 'gpt-5-codex-high' : agentType === 'gemini' ? 'gemini-2.5-pro' : 'default';
+        return agentType === 'codex' ? 'codex' : agentType === 'gemini' ? 'gemini-2.5-pro' : agentType === 'opencode' ? 'opencode-auto' : 'default';
     });
 
     // Session details state
@@ -556,7 +559,7 @@ function NewSessionWizard() {
         const supportedCLIs = (Object.entries(profile.compatibility) as [string, boolean][])
             .filter(([, supported]) => supported)
             .map(([agent]) => agent);
-        const requiredCLI = supportedCLIs.length === 1 ? supportedCLIs[0] as 'claude' | 'codex' | 'gemini' : null;
+        const requiredCLI = supportedCLIs.length === 1 ? supportedCLIs[0] as 'claude' | 'codex' | 'gemini' | 'opencode' : null;
 
         if (requiredCLI && cliAvailability[requiredCLI] === false) {
             return {
@@ -720,16 +723,19 @@ function NewSessionWizard() {
 
     // Reset model mode when agent type changes to appropriate default
     React.useEffect(() => {
-        const validClaudeModes: ModelMode[] = ['default', 'adaptiveUsage', 'sonnet', 'opus'];
-        const validCodexModes: ModelMode[] = ['gpt-5-codex-high', 'gpt-5-codex-medium', 'gpt-5-codex-low', 'gpt-5-minimal', 'gpt-5-low', 'gpt-5-medium', 'gpt-5-high'];
+        const validClaudeModes: ModelMode[] = ['default', 'sonnet', 'opus', 'haiku'];
+        const validCodexModes: ModelMode[] = ['codex', 'codex-mini', 'gpt-4o', 'gpt-4o-mini', 'o1', 'o1-mini', 'o1-pro', 'o3-mini'];
         // Note: 'default' is NOT valid for Gemini - we want explicit model selection
         const validGeminiModes: ModelMode[] = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+        const validOpenCodeModes: ModelMode[] = ['opencode-auto', 'opencode-claude', 'opencode-gpt4', 'opencode-gemini'];
 
         let isValidForCurrentAgent = false;
         if (agentType === 'codex') {
             isValidForCurrentAgent = validCodexModes.includes(modelMode);
         } else if (agentType === 'gemini') {
             isValidForCurrentAgent = validGeminiModes.includes(modelMode);
+        } else if (agentType === 'opencode') {
+            isValidForCurrentAgent = validOpenCodeModes.includes(modelMode);
         } else {
             isValidForCurrentAgent = validClaudeModes.includes(modelMode);
         }
@@ -737,9 +743,11 @@ function NewSessionWizard() {
         if (!isValidForCurrentAgent) {
             // Set appropriate default for each agent type
             if (agentType === 'codex') {
-                setModelMode('gpt-5-codex-high');
+                setModelMode('codex');
             } else if (agentType === 'gemini') {
                 setModelMode('gemini-2.5-pro');
+            } else if (agentType === 'opencode') {
+                setModelMode('opencode-auto');
             } else {
                 setModelMode('default');
             }
@@ -793,7 +801,7 @@ function NewSessionWizard() {
             name: '',
             anthropicConfig: {},
             environmentVariables: [],
-            compatibility: { claude: true, codex: true, gemini: true },
+            compatibility: { claude: true, codex: true, gemini: true, opencode: true },
             isBuiltIn: false,
             createdAt: Date.now(),
             updatedAt: Date.now(),

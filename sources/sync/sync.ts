@@ -251,10 +251,9 @@ class Sync {
             sentFrom = 'web'; // fallback
         }
 
-        // Model settings - for Gemini, we pass the selected model; for others, CLI handles it
+        // Model settings - pass model for all agents (not just Gemini)
         let model: string | null = null;
-        if (isGemini && modelMode !== 'default') {
-            // For Gemini ACP, pass the selected model to CLI
+        if (modelMode && modelMode !== 'default') {
             model = modelMode;
         }
         const fallbackModel: string | null = null;

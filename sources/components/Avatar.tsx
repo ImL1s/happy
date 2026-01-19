@@ -22,6 +22,7 @@ const flavorIcons = {
     claude: require('@/assets/images/icon-claude.png'),
     codex: require('@/assets/images/icon-gpt.png'),
     gemini: require('@/assets/images/icon-gemini.png'),
+    opencode: require('@/assets/images/icon-tauri.png'), // Using tauri icon for OpenCode with tint
 };
 
 const styles = StyleSheet.create((theme) => ({
@@ -73,7 +74,15 @@ export const Avatar = React.memo((props: AvatarProps) => {
                 ? Math.round(size * 0.25)
                 : effectiveFlavor === 'claude'
                     ? Math.round(size * 0.28)
-                    : Math.round(size * 0.35);
+                    : effectiveFlavor === 'opencode'
+                        ? Math.round(size * 0.28)
+                        : Math.round(size * 0.35);
+            // Determine tint color for flavor icon
+            const iconTintColor = effectiveFlavor === 'codex'
+                ? theme.colors.text
+                : effectiveFlavor === 'opencode'
+                    ? '#10B981' // Green color for OpenCode
+                    : undefined;
 
             return (
                 <View style={[styles.container, { width: size, height: size }]}>
@@ -88,7 +97,7 @@ export const Avatar = React.memo((props: AvatarProps) => {
                             source={flavorIcon}
                             style={{ width: iconSize, height: iconSize }}
                             contentFit="contain"
-                            tintColor={effectiveFlavor === 'codex' ? theme.colors.text : undefined}
+                            tintColor={iconTintColor}
                         />
                     </View>
                 </View>
@@ -119,7 +128,15 @@ export const Avatar = React.memo((props: AvatarProps) => {
         ? Math.round(size * 0.25)
         : effectiveFlavor === 'claude'
             ? Math.round(size * 0.28)
-            : Math.round(size * 0.35);
+            : effectiveFlavor === 'opencode'
+                ? Math.round(size * 0.28)
+                : Math.round(size * 0.35);
+    // Determine tint color for flavor icon
+    const iconTintColor = effectiveFlavor === 'codex'
+        ? theme.colors.text
+        : effectiveFlavor === 'opencode'
+            ? '#10B981' // Green color for OpenCode
+            : undefined;
 
     // Only wrap in container if showing flavor icons
     if (showFlavorIcons) {
@@ -136,7 +153,7 @@ export const Avatar = React.memo((props: AvatarProps) => {
                         source={flavorIcon}
                         style={{ width: iconSize, height: iconSize }}
                         contentFit="contain"
-                        tintColor={effectiveFlavor === 'codex' ? theme.colors.text : undefined}
+                        tintColor={iconTintColor}
                     />
                 </View>
             </View>

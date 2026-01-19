@@ -312,8 +312,9 @@ function SessionInfoContent({ session }: { session: Session }) {
                             subtitle={(() => {
                                 const flavor = session.metadata.flavor || 'claude';
                                 if (flavor === 'claude') return 'Claude';
-                                if (flavor === 'gpt' || flavor === 'openai') return 'Codex';
+                                if (flavor === 'codex') return 'Codex';
                                 if (flavor === 'gemini') return 'Gemini';
+                                if (flavor === 'opencode') return 'OpenCode';
                                 return flavor;
                             })()}
                             icon={<Ionicons name="sparkles-outline" size={29} color="#5856D6" />}

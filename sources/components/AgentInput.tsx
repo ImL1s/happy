@@ -24,6 +24,45 @@ import { Metadata } from '@/sync/storageTypes';
 import { AIBackendProfile, getProfileEnvironmentVariables, validateProfileForAgent } from '@/sync/settings';
 import { getBuiltInProfile } from '@/sync/profileUtils';
 
+// Model options for each agent type
+const CLAUDE_MODELS = [
+    { value: 'default', label: 'Default', description: 'Use CLI configuration' },
+    { value: 'sonnet', label: 'Claude Sonnet', description: 'Fast and capable' },
+    { value: 'opus', label: 'Claude Opus', description: 'Most powerful' },
+    { value: 'haiku', label: 'Claude Haiku', description: 'Fastest' },
+] as const;
+
+const CODEX_MODELS = [
+    { value: 'default', label: 'Default', description: 'Use CLI configuration' },
+    { value: 'codex', label: 'Codex', description: 'Default Codex model' },
+    { value: 'gpt-4o', label: 'GPT-4o', description: 'Most capable' },
+    { value: 'o1', label: 'o1', description: 'Reasoning model' },
+    { value: 'o3-mini', label: 'o3-mini', description: 'Fast reasoning' },
+] as const;
+
+const GEMINI_MODELS = [
+    { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: 'Most powerful' },
+    { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', description: 'Fast and efficient' },
+    { value: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite', description: 'Fastest' },
+] as const;
+
+const OPENCODE_MODELS = [
+    { value: 'default', label: 'Auto', description: 'Auto-select best model' },
+    { value: 'opencode-claude', label: 'Claude', description: 'Via Anthropic' },
+    { value: 'opencode-gpt4', label: 'GPT-4', description: 'Via OpenAI' },
+    { value: 'opencode-gemini', label: 'Gemini', description: 'Via Google' },
+] as const;
+
+function getModelsForAgent(flavor: string | undefined) {
+    switch (flavor) {
+        case 'claude': return CLAUDE_MODELS;
+        case 'codex': return CODEX_MODELS;
+        case 'gemini': return GEMINI_MODELS;
+        case 'opencode': return OPENCODE_MODELS;
+        default: return CLAUDE_MODELS;
+    }
+}
+
 interface AgentInputProps {
     value: string;
     placeholder: string;
@@ -62,7 +101,7 @@ interface AgentInputProps {
     };
     alwaysShowContextSize?: boolean;
     onFileViewerPress?: () => void;
-    agentType?: 'claude' | 'codex' | 'gemini';
+    agentType?: 'claude' | 'codex' | 'gemini' | 'opencode';
     onAgentClick?: () => void;
     machineName?: string | null;
     onMachineClick?: () => void;
@@ -303,6 +342,10 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
     // Use metadata.flavor for existing sessions, agentType prop for new sessions
     const isCodex = props.metadata?.flavor === 'codex' || props.agentType === 'codex';
     const isGemini = props.metadata?.flavor === 'gemini' || props.agentType === 'gemini';
+
+    // Get current flavor for model selection
+    const currentFlavor = props.metadata?.flavor || props.agentType || 'claude';
+    const modelOptions = getModelsForAgent(currentFlavor);
 
     // Profile data
     const profiles = useSetting('profiles');
@@ -620,81 +663,63 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                                     }}>
                                         {t('agentInput.model.title')}
                                     </Text>
-                                    {isGemini ? (
-                                        // Gemini model selector
-                                        (['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'] as const).map((model) => {
-                                            const modelConfig = {
-                                                'gemini-2.5-pro': { label: 'Gemini 2.5 Pro', description: 'Most capable' },
-                                                'gemini-2.5-flash': { label: 'Gemini 2.5 Flash', description: 'Fast & efficient' },
-                                                'gemini-2.5-flash-lite': { label: 'Gemini 2.5 Flash Lite', description: 'Fastest' },
-                                            };
-                                            const config = modelConfig[model];
-                                            const isSelected = props.modelMode === model;
+                                    {/* Model selector for all agent types */}
+                                    {modelOptions.map((model) => {
+                                        const isSelected = props.modelMode === model.value || (!props.modelMode && model.value === 'default');
 
-                                            return (
-                                                <Pressable
-                                                    key={model}
-                                                    onPress={() => {
-                                                        hapticsLight();
-                                                        props.onModelModeChange?.(model);
-                                                    }}
-                                                    style={({ pressed }) => ({
-                                                        flexDirection: 'row',
-                                                        alignItems: 'center',
-                                                        paddingHorizontal: 16,
-                                                        paddingVertical: 8,
-                                                        backgroundColor: pressed ? theme.colors.surfacePressed : 'transparent'
-                                                    })}
-                                                >
-                                                    <View style={{
-                                                        width: 16,
-                                                        height: 16,
-                                                        borderRadius: 8,
-                                                        borderWidth: 2,
-                                                        borderColor: isSelected ? theme.colors.radio.active : theme.colors.radio.inactive,
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        marginRight: 12
+                                        return (
+                                            <Pressable
+                                                key={model.value}
+                                                onPress={() => {
+                                                    hapticsLight();
+                                                    props.onModelModeChange?.(model.value as any);
+                                                }}
+                                                style={({ pressed }) => ({
+                                                    flexDirection: 'row',
+                                                    alignItems: 'center',
+                                                    paddingHorizontal: 16,
+                                                    paddingVertical: 8,
+                                                    backgroundColor: pressed ? theme.colors.surfacePressed : 'transparent'
+                                                })}
+                                            >
+                                                <View style={{
+                                                    width: 16,
+                                                    height: 16,
+                                                    borderRadius: 8,
+                                                    borderWidth: 2,
+                                                    borderColor: isSelected ? theme.colors.radio.active : theme.colors.radio.inactive,
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    marginRight: 12
+                                                }}>
+                                                    {isSelected && (
+                                                        <View style={{
+                                                            width: 6,
+                                                            height: 6,
+                                                            borderRadius: 3,
+                                                            backgroundColor: theme.colors.radio.dot
+                                                        }} />
+                                                    )}
+                                                </View>
+                                                <View>
+                                                    <Text style={{
+                                                        fontSize: 14,
+                                                        color: isSelected ? theme.colors.radio.active : theme.colors.text,
+                                                        ...Typography.default()
                                                     }}>
-                                                        {isSelected && (
-                                                            <View style={{
-                                                                width: 6,
-                                                                height: 6,
-                                                                borderRadius: 3,
-                                                                backgroundColor: theme.colors.radio.dot
-                                                            }} />
-                                                        )}
-                                                    </View>
-                                                    <View>
-                                                        <Text style={{
-                                                            fontSize: 14,
-                                                            color: isSelected ? theme.colors.radio.active : theme.colors.text,
-                                                            ...Typography.default()
-                                                        }}>
-                                                            {config.label}
-                                                        </Text>
-                                                        <Text style={{
-                                                            fontSize: 11,
-                                                            color: theme.colors.textSecondary,
-                                                            ...Typography.default()
-                                                        }}>
-                                                            {config.description}
-                                                        </Text>
-                                                    </View>
-                                                </Pressable>
-                                            );
-                                        })
-                                    ) : (
-                                        <Text style={{
-                                            fontSize: 13,
-                                            color: theme.colors.textSecondary,
-                                            paddingHorizontal: 16,
-                                            paddingVertical: 8,
-                                            ...Typography.default()
-                                        }}>
-                                            {t('agentInput.model.configureInCli')}
-                                        </Text>
-                                    )}
+                                                        {model.label}
+                                                    </Text>
+                                                    <Text style={{
+                                                        fontSize: 11,
+                                                        color: theme.colors.textSecondary,
+                                                        ...Typography.default()
+                                                    }}>
+                                                        {model.description}
+                                                    </Text>
+                                                </View>
+                                            </Pressable>
+                                        );
+                                    })}
                                 </View>
                             </FloatingOverlay>
                         </View>
