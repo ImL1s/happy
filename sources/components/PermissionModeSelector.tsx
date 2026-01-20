@@ -15,8 +15,16 @@ export type ModelMode =
   | 'codex' | 'codex-mini' | 'gpt-4o' | 'gpt-4o-mini' | 'o1' | 'o1-mini' | 'o1-pro' | 'o3-mini'
   // Gemini models
   | 'gemini-2.5-pro' | 'gemini-2.5-flash' | 'gemini-2.5-flash-lite'
-  // OpenCode models
-  | 'opencode-auto' | 'opencode-claude' | 'opencode-gpt4' | 'opencode-gemini';
+  // OpenCode models (format: provider/model)
+  | 'auto'
+  // OpenCode native
+  | 'opencode/claude-sonnet-4-5' | 'opencode/claude-opus-4-5' | 'opencode/gemini-3-flash' | 'opencode/gpt-5.1-codex'
+  // Antigravity plugin
+  | 'google/antigravity-gemini-3-flash' | 'google/antigravity-claude-sonnet-4-5' | 'google/antigravity-claude-sonnet-4-5-thinking'
+  // GitHub Copilot
+  | 'github-copilot/claude-sonnet-4.5' | 'github-copilot/gpt-5.1-codex'
+  // Google provider
+  | 'google/gemini-2.5-pro' | 'google/gemini-2.5-flash';
 
 interface PermissionModeSelectorProps {
     mode: PermissionMode;

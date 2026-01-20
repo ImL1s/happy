@@ -58,10 +58,13 @@ export function ProfileEditForm({
     const [startupScript, setStartupScript] = React.useState(profile.startupBashScript || '');
     const [defaultSessionType, setDefaultSessionType] = React.useState<'simple' | 'worktree'>(profile.defaultSessionType || 'simple');
     const [defaultPermissionMode, setDefaultPermissionMode] = React.useState<PermissionMode>((profile.defaultPermissionMode as PermissionMode) || 'default');
-    const [agentType, setAgentType] = React.useState<'claude' | 'codex'>(() => {
-        if (profile.compatibility.claude && !profile.compatibility.codex) return 'claude';
-        if (profile.compatibility.codex && !profile.compatibility.claude) return 'codex';
-        return 'claude'; // Default to Claude if both or neither
+    const [agentType, setAgentType] = React.useState<'claude' | 'codex' | 'gemini' | 'opencode'>(() => {
+        // Determine primary agent type based on compatibility flags
+        if (profile.compatibility.opencode && !profile.compatibility.claude && !profile.compatibility.codex && !profile.compatibility.gemini) return 'opencode';
+        if (profile.compatibility.gemini && !profile.compatibility.claude && !profile.compatibility.codex && !profile.compatibility.opencode) return 'gemini';
+        if (profile.compatibility.codex && !profile.compatibility.claude && !profile.compatibility.gemini && !profile.compatibility.opencode) return 'codex';
+        if (profile.compatibility.claude && !profile.compatibility.codex && !profile.compatibility.gemini && !profile.compatibility.opencode) return 'claude';
+        return 'claude'; // Default to Claude if multiple or none
     });
 
     const handleSave = () => {

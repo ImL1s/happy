@@ -440,6 +440,16 @@ export const ca: TranslationStructure = {
             badgeSafeYolo: 'YOLO segur',
             badgeYolo: 'YOLO',
         },
+        opencodePermissionMode: {
+            title: 'OPENCODE PERMISSION MODE',
+            default: 'Default',
+            readOnly: 'Read Only',
+            safeYolo: 'Safe YOLO',
+            yolo: 'YOLO',
+            badgeReadOnly: 'Read Only',
+            badgeSafeYolo: 'Safe YOLO',
+            badgeYolo: 'YOLO',
+        },
         context: {
             remaining: ({ percent }: { percent: number }) => `${percent}% restant`,
         },

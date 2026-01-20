@@ -472,6 +472,16 @@ export const ja: TranslationStructure = {
             badgeSafeYolo: '安全YOLO',
             badgeYolo: 'YOLO',
         },
+        opencodePermissionMode: {
+            title: 'OPENCODE PERMISSION MODE',
+            default: 'Default',
+            readOnly: 'Read Only',
+            safeYolo: 'Safe YOLO',
+            yolo: 'YOLO',
+            badgeReadOnly: 'Read Only',
+            badgeSafeYolo: 'Safe YOLO',
+            badgeYolo: 'YOLO',
+        },
         context: {
             remaining: ({ percent }: { percent: number }) => `残り ${percent}%`,
         },

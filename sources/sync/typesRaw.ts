@@ -398,14 +398,38 @@ export type NormalizedMessage = ({
     usage?: UsageData,
 };
 
+// Track validation errors to avoid spamming console
+let validationErrorCount = 0;
+const MAX_VALIDATION_ERRORS_TO_LOG = 5;
+
 export function normalizeRawMessage(id: string, localId: string | null, createdAt: number, raw: RawRecord): NormalizedMessage | null {
     // Zod transform handles normalization during validation
     let parsed = rawRecordSchema.safeParse(raw);
     if (!parsed.success) {
-        console.error('=== VALIDATION ERROR ===');
-        console.error('Zod issues:', JSON.stringify(parsed.error.issues, null, 2));
-        console.error('Raw message:', JSON.stringify(raw, null, 2));
-        console.error('=== END ERROR ===');
+        validationErrorCount++;
+
+        // Only log first few errors to avoid console spam
+        if (validationErrorCount <= MAX_VALIDATION_ERRORS_TO_LOG) {
+            // Use console.warn instead of console.error to avoid triggering error dialogs
+            console.warn(`[typesRaw] Message validation failed (${validationErrorCount}):`, {
+                messageId: id,
+                rawRole: (raw as any)?.role,
+                rawContentType: (raw as any)?.content?.type,
+                firstIssue: parsed.error.issues[0]?.message,
+                issueCount: parsed.error.issues.length
+            });
+
+            // Log full details at debug level
+            if (__DEV__) {
+                console.log('[typesRaw] Full validation error:', JSON.stringify({
+                    issues: parsed.error.issues,
+                    raw: raw
+                }, null, 2).substring(0, 1000));
+            }
+        } else if (validationErrorCount === MAX_VALIDATION_ERRORS_TO_LOG + 1) {
+            console.warn(`[typesRaw] Suppressing further validation errors (total: ${validationErrorCount}+)`);
+        }
+
         return null;
     }
     raw = parsed.data;

@@ -1490,3 +1490,271 @@ describe('Zod Transform - WOLOG Content Normalization', () => {
         });
     });
 });
+
+/**
+ * OpenCode ACP Message Tests
+ *
+ * Verifies that OpenCode's ACP messages validate correctly through the schema.
+ * OpenCode uses the unified ACP format with provider: 'opencode'.
+ */
+describe('OpenCode ACP Message Validation', () => {
+
+    describe('Task lifecycle events', () => {
+        it('validates task_started ACP message', () => {
+            const message = {
+                role: 'agent',
+                content: {
+                    type: 'acp',
+                    provider: 'opencode',
+                    data: {
+                        type: 'task_started',
+                        id: 'test-task-123'
+                    }
+                },
+                meta: {
+                    sentFrom: 'cli'
+                }
+            };
+
+            const result = RawRecordSchema.safeParse(message);
+            expect(result.success).toBe(true);
+        });
+
+        it('validates task_complete ACP message', () => {
+            const message = {
+                role: 'agent',
+                content: {
+                    type: 'acp',
+                    provider: 'opencode',
+                    data: {
+                        type: 'task_complete',
+                        id: 'test-task-456'
+                    }
+                },
+                meta: {
+                    sentFrom: 'cli'
+                }
+            };
+
+            const result = RawRecordSchema.safeParse(message);
+            expect(result.success).toBe(true);
+        });
+
+        it('validates turn_aborted ACP message', () => {
+            const message = {
+                role: 'agent',
+                content: {
+                    type: 'acp',
+                    provider: 'opencode',
+                    data: {
+                        type: 'turn_aborted',
+                        id: 'test-abort-789'
+                    }
+                },
+                meta: {
+                    sentFrom: 'cli'
+                }
+            };
+
+            const result = RawRecordSchema.safeParse(message);
+            expect(result.success).toBe(true);
+        });
+    });
+
+    describe('Core message types', () => {
+        it('validates message type', () => {
+            const message = {
+                role: 'agent',
+                content: {
+                    type: 'acp',
+                    provider: 'opencode',
+                    data: {
+                        type: 'message',
+                        message: 'Hello from OpenCode!'
+                    }
+                },
+                meta: {
+                    sentFrom: 'cli'
+                }
+            };
+
+            const result = RawRecordSchema.safeParse(message);
+            expect(result.success).toBe(true);
+        });
+
+        it('validates reasoning type', () => {
+            const message = {
+                role: 'agent',
+                content: {
+                    type: 'acp',
+                    provider: 'opencode',
+                    data: {
+                        type: 'reasoning',
+                        message: 'Thinking about the problem...'
+                    }
+                }
+            };
+
+            const result = RawRecordSchema.safeParse(message);
+            expect(result.success).toBe(true);
+        });
+
+        it('validates thinking type', () => {
+            const message = {
+                role: 'agent',
+                content: {
+                    type: 'acp',
+                    provider: 'opencode',
+                    data: {
+                        type: 'thinking',
+                        text: 'Deep thoughts...'
+                    }
+                }
+            };
+
+            const result = RawRecordSchema.safeParse(message);
+            expect(result.success).toBe(true);
+        });
+    });
+
+    describe('Tool interactions', () => {
+        it('validates tool-call ACP message', () => {
+            const message = {
+                role: 'agent',
+                content: {
+                    type: 'acp',
+                    provider: 'opencode',
+                    data: {
+                        type: 'tool-call',
+                        id: 'tool-uuid-123',
+                        callId: 'call-456',
+                        name: 'mcp__happy__change_title',
+                        input: { title: 'New Title' }
+                    }
+                },
+                meta: {
+                    sentFrom: 'cli'
+                }
+            };
+
+            const result = RawRecordSchema.safeParse(message);
+            expect(result.success).toBe(true);
+        });
+
+        it('validates tool-result ACP message', () => {
+            const message = {
+                role: 'agent',
+                content: {
+                    type: 'acp',
+                    provider: 'opencode',
+                    data: {
+                        type: 'tool-result',
+                        id: 'result-uuid-789',
+                        callId: 'call-456',
+                        output: { success: true, title: 'Updated Title' }
+                    }
+                },
+                meta: {
+                    sentFrom: 'cli'
+                }
+            };
+
+            const result = RawRecordSchema.safeParse(message);
+            expect(result.success).toBe(true);
+        });
+
+        it('validates tool-result with isError flag', () => {
+            const message = {
+                role: 'agent',
+                content: {
+                    type: 'acp',
+                    provider: 'opencode',
+                    data: {
+                        type: 'tool-result',
+                        id: 'error-result-123',
+                        callId: 'call-error',
+                        output: 'Error: Something went wrong',
+                        isError: true
+                    }
+                }
+            };
+
+            const result = RawRecordSchema.safeParse(message);
+            expect(result.success).toBe(true);
+        });
+    });
+
+    describe('normalizeRawMessage handling', () => {
+        it('returns null for task_started (lifecycle events skip UI)', () => {
+            const message = {
+                role: 'agent' as const,
+                content: {
+                    type: 'acp' as const,
+                    provider: 'opencode' as const,
+                    data: {
+                        type: 'task_started' as const,
+                        id: 'lifecycle-test-123'
+                    }
+                }
+            };
+
+            const normalized = normalizeRawMessage('msg-1', null, Date.now(), message);
+            // Task lifecycle events return null as they don't need UI rendering
+            expect(normalized).toBeNull();
+        });
+
+        it('normalizes message type to agent text', () => {
+            const message = {
+                role: 'agent' as const,
+                content: {
+                    type: 'acp' as const,
+                    provider: 'opencode' as const,
+                    data: {
+                        type: 'message' as const,
+                        message: 'Hello from OpenCode!'
+                    }
+                }
+            };
+
+            const normalized = normalizeRawMessage('msg-2', null, Date.now(), message);
+            expect(normalized).not.toBeNull();
+            expect(normalized!.role).toBe('agent');
+            if (normalized!.role === 'agent' && Array.isArray(normalized!.content)) {
+                expect(normalized!.content).toHaveLength(1);
+                expect(normalized!.content[0].type).toBe('text');
+                if (normalized!.content[0].type === 'text') {
+                    expect(normalized!.content[0].text).toBe('Hello from OpenCode!');
+                }
+            }
+        });
+
+        it('normalizes tool-call to tool-call content', () => {
+            const message = {
+                role: 'agent' as const,
+                content: {
+                    type: 'acp' as const,
+                    provider: 'opencode' as const,
+                    data: {
+                        type: 'tool-call' as const,
+                        id: 'tool-uuid-456',
+                        callId: 'call-789',
+                        name: 'Bash',
+                        input: { command: 'ls -la' }
+                    }
+                }
+            };
+
+            const normalized = normalizeRawMessage('msg-3', null, Date.now(), message);
+            expect(normalized).not.toBeNull();
+            expect(normalized!.role).toBe('agent');
+            if (normalized!.role === 'agent' && Array.isArray(normalized!.content)) {
+                expect(normalized!.content).toHaveLength(1);
+                expect(normalized!.content[0].type).toBe('tool-call');
+                if (normalized!.content[0].type === 'tool-call') {
+                    expect(normalized!.content[0].name).toBe('Bash');
+                    expect(normalized!.content[0].id).toBe('call-789');
+                }
+            }
+        });
+    });
+});

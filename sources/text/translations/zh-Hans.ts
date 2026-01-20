@@ -442,6 +442,16 @@ export const zhHans: TranslationStructure = {
             badgeSafeYolo: '安全 YOLO',
             badgeYolo: 'YOLO',
         },
+        opencodePermissionMode: {
+            title: 'OPENCODE PERMISSION MODE',
+            default: 'Default',
+            readOnly: 'Read Only',
+            safeYolo: 'Safe YOLO',
+            yolo: 'YOLO',
+            badgeReadOnly: 'Read Only',
+            badgeSafeYolo: 'Safe YOLO',
+            badgeYolo: 'YOLO',
+        },
         context: {
             remaining: ({ percent }: { percent: number }) => `剩余 ${percent}%`,
         },

@@ -47,10 +47,23 @@ const GEMINI_MODELS = [
 ] as const;
 
 const OPENCODE_MODELS = [
-    { value: 'default', label: 'Auto', description: 'Auto-select best model' },
-    { value: 'opencode-claude', label: 'Claude', description: 'Via Anthropic' },
-    { value: 'opencode-gpt4', label: 'GPT-4', description: 'Via OpenAI' },
-    { value: 'opencode-gemini', label: 'Gemini', description: 'Via Google' },
+    // Auto
+    { value: 'auto', label: 'Auto', description: 'Auto-select best model' },
+    // OpenCode native models
+    { value: 'opencode/claude-sonnet-4-5', label: 'Claude Sonnet 4.5', description: 'OpenCode' },
+    { value: 'opencode/claude-opus-4-5', label: 'Claude Opus 4.5', description: 'OpenCode' },
+    { value: 'opencode/gemini-3-flash', label: 'Gemini 3 Flash', description: 'OpenCode' },
+    { value: 'opencode/gpt-5.1-codex', label: 'GPT-5.1 Codex', description: 'OpenCode' },
+    // Antigravity plugin (extended context via Google infra)
+    { value: 'google/antigravity-gemini-3-flash', label: 'Antigravity Gemini 3', description: 'Antigravity Plugin' },
+    { value: 'google/antigravity-claude-sonnet-4-5', label: 'Antigravity Claude Sonnet', description: 'Antigravity Plugin' },
+    { value: 'google/antigravity-claude-sonnet-4-5-thinking', label: 'Antigravity Claude Thinking', description: 'Antigravity Plugin' },
+    // GitHub Copilot provider
+    { value: 'github-copilot/claude-sonnet-4.5', label: 'Claude Sonnet 4.5', description: 'GitHub Copilot' },
+    { value: 'github-copilot/gpt-5.1-codex', label: 'GPT-5.1 Codex', description: 'GitHub Copilot' },
+    // Google provider
+    { value: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: 'Google' },
+    { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash', description: 'Google' },
 ] as const;
 
 function getModelsForAgent(flavor: string | undefined) {
@@ -87,7 +100,8 @@ interface AgentInputProps {
         cliStatus?: {
             claude: boolean | null;
             codex: boolean | null;
-            gemini?: boolean | null;
+            gemini: boolean | null;
+            opencode: boolean | null;
         };
     };
     autocompletePrefixes: string[];
@@ -338,10 +352,11 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
 
     const hasText = props.value.trim().length > 0;
 
-    // Check if this is a Codex or Gemini session
+    // Check if this is a Codex, Gemini, or OpenCode session
     // Use metadata.flavor for existing sessions, agentType prop for new sessions
     const isCodex = props.metadata?.flavor === 'codex' || props.agentType === 'codex';
     const isGemini = props.metadata?.flavor === 'gemini' || props.agentType === 'gemini';
+    const isOpenCode = props.metadata?.flavor === 'opencode' || props.agentType === 'opencode';
 
     // Get current flavor for model selection
     const currentFlavor = props.metadata?.flavor || props.agentType || 'claude';
@@ -517,9 +532,9 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
             }
             // Handle Shift+Tab for permission mode switching
             if (event.key === 'Tab' && event.shiftKey && props.onPermissionModeChange) {
-                const modeOrder: PermissionMode[] = isCodex
+                const modeOrder: PermissionMode[] = (isCodex || isGemini || isOpenCode)
                     ? ['default', 'read-only', 'safe-yolo', 'yolo']
-                    : ['default', 'acceptEdits', 'plan', 'bypassPermissions']; // Claude and Gemini share same modes
+                    : ['default', 'acceptEdits', 'plan', 'bypassPermissions']; // Claude uses different modes
                 const currentIndex = modeOrder.indexOf(props.permissionMode || 'default');
                 const nextIndex = (currentIndex + 1) % modeOrder.length;
                 props.onPermissionModeChange(modeOrder[nextIndex]);
@@ -575,9 +590,9 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                                 {/* Permission Mode Section */}
                                 <View style={styles.overlaySection}>
                                     <Text style={styles.overlaySectionTitle}>
-                                        {isCodex ? t('agentInput.codexPermissionMode.title') : isGemini ? t('agentInput.geminiPermissionMode.title') : t('agentInput.permissionMode.title')}
+                                        {isCodex ? t('agentInput.codexPermissionMode.title') : isGemini ? t('agentInput.geminiPermissionMode.title') : isOpenCode ? t('agentInput.opencodePermissionMode.title') : t('agentInput.permissionMode.title')}
                                     </Text>
-                                    {((isCodex || isGemini)
+                                    {((isCodex || isGemini || isOpenCode)
                                         ? (['default', 'read-only', 'safe-yolo', 'yolo'] as const)
                                         : (['default', 'acceptEdits', 'plan', 'bypassPermissions'] as const)
                                     ).map((mode) => {
@@ -591,6 +606,11 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                                             'read-only': { label: t('agentInput.geminiPermissionMode.readOnly') },
                                             'safe-yolo': { label: t('agentInput.geminiPermissionMode.safeYolo') },
                                             'yolo': { label: t('agentInput.geminiPermissionMode.yolo') },
+                                        } : isOpenCode ? {
+                                            'default': { label: t('agentInput.opencodePermissionMode.default') },
+                                            'read-only': { label: t('agentInput.opencodePermissionMode.readOnly') },
+                                            'safe-yolo': { label: t('agentInput.opencodePermissionMode.safeYolo') },
+                                            'yolo': { label: t('agentInput.opencodePermissionMode.yolo') },
                                         } : {
                                             default: { label: t('agentInput.permissionMode.default') },
                                             acceptEdits: { label: t('agentInput.permissionMode.acceptEdits') },
@@ -818,6 +838,28 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                                                     </Text>
                                                 </View>
                                             )}
+                                            {props.connectionStatus.cliStatus.opencode !== undefined && (
+                                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                                    <Text style={{
+                                                        fontSize: 11,
+                                                        color: props.connectionStatus.cliStatus.opencode
+                                                            ? theme.colors.success
+                                                            : theme.colors.textDestructive,
+                                                        ...Typography.default()
+                                                    }}>
+                                                        {props.connectionStatus.cliStatus.opencode ? '✓' : '✗'}
+                                                    </Text>
+                                                    <Text style={{
+                                                        fontSize: 11,
+                                                        color: props.connectionStatus.cliStatus.opencode
+                                                            ? theme.colors.success
+                                                            : theme.colors.textDestructive,
+                                                        ...Typography.default()
+                                                    }}>
+                                                        opencode
+                                                    </Text>
+                                                </View>
+                                            )}
                                         </>
                                     )}
                                 </>
@@ -860,6 +902,11 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                                             props.permissionMode === 'read-only' ? t('agentInput.geminiPermissionMode.badgeReadOnly') :
                                                 props.permissionMode === 'safe-yolo' ? t('agentInput.geminiPermissionMode.badgeSafeYolo') :
                                                     props.permissionMode === 'yolo' ? t('agentInput.geminiPermissionMode.badgeYolo') : ''
+                                    ) : isOpenCode ? (
+                                        props.permissionMode === 'default' ? t('agentInput.opencodePermissionMode.default') :
+                                            props.permissionMode === 'read-only' ? t('agentInput.opencodePermissionMode.badgeReadOnly') :
+                                                props.permissionMode === 'safe-yolo' ? t('agentInput.opencodePermissionMode.badgeSafeYolo') :
+                                                    props.permissionMode === 'yolo' ? t('agentInput.opencodePermissionMode.badgeYolo') : ''
                                     ) : (
                                         props.permissionMode === 'default' ? t('agentInput.permissionMode.default') :
                                             props.permissionMode === 'acceptEdits' ? t('agentInput.permissionMode.badgeAcceptAllEdits') :
@@ -1040,6 +1087,7 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                                 {/* Agent selector button */}
                                 {props.agentType && props.onAgentClick && (
                                     <Pressable
+                                        accessibilityLabel="Agent Selector"
                                         onPress={() => {
                                             hapticsLight();
                                             props.onAgentClick?.();
@@ -1068,7 +1116,7 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                                             fontWeight: '600',
                                             ...Typography.default('semiBold'),
                                         }}>
-                                            {props.agentType === 'claude' ? t('agentInput.agent.claude') : props.agentType === 'codex' ? t('agentInput.agent.codex') : t('agentInput.agent.gemini')}
+                                            {props.agentType === 'claude' ? t('agentInput.agent.claude') : props.agentType === 'codex' ? t('agentInput.agent.codex') : props.agentType === 'opencode' ? t('agentInput.agent.opencode') : t('agentInput.agent.gemini')}
                                         </Text>
                                     </Pressable>
                                 )}

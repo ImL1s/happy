@@ -513,7 +513,7 @@ interface NewSessionWizardProps {
     onComplete: (config: {
         sessionType: 'simple' | 'worktree';
         profileId: string | null;
-        agentType: 'claude' | 'codex';
+        agentType: 'claude' | 'codex' | 'gemini' | 'opencode';
         permissionMode: PermissionMode;
         modelMode: ModelMode;
         machineId: string;
@@ -542,8 +542,8 @@ export function NewSessionWizard({ onComplete, onCancel, initialPrompt = '' }: N
     // Wizard state
     const [currentStep, setCurrentStep] = useState<WizardStep>('profile');
     const [sessionType, setSessionType] = useState<'simple' | 'worktree'>('simple');
-    const [agentType, setAgentType] = useState<'claude' | 'codex'>(() => {
-        if (lastUsedAgent === 'claude' || lastUsedAgent === 'codex') {
+    const [agentType, setAgentType] = useState<'claude' | 'codex' | 'gemini' | 'opencode'>(() => {
+        if (lastUsedAgent === 'claude' || lastUsedAgent === 'codex' || lastUsedAgent === 'gemini' || lastUsedAgent === 'opencode') {
             return lastUsedAgent;
         }
         return 'claude';
@@ -780,11 +780,17 @@ export function NewSessionWizard({ onComplete, onCancel, initialPrompt = '' }: N
             const selectedProfile = allProfiles.find(p => p.id === selectedProfileId);
             if (selectedProfile) {
                 // Auto-select agent type based on profile compatibility
-                if (selectedProfile.compatibility.claude && !selectedProfile.compatibility.codex) {
-                    setAgentType('claude');
-                } else if (selectedProfile.compatibility.codex && !selectedProfile.compatibility.claude) {
-                    setAgentType('codex');
-                }
+                // Check each agent type exclusively
+                const compat = selectedProfile.compatibility;
+                const onlyClaude = compat.claude && !compat.codex && !compat.gemini && !compat.opencode;
+                const onlyCodex = compat.codex && !compat.claude && !compat.gemini && !compat.opencode;
+                const onlyGemini = compat.gemini && !compat.claude && !compat.codex && !compat.opencode;
+                const onlyOpencode = compat.opencode && !compat.claude && !compat.codex && !compat.gemini;
+
+                if (onlyClaude) setAgentType('claude');
+                else if (onlyCodex) setAgentType('codex');
+                else if (onlyGemini) setAgentType('gemini');
+                else if (onlyOpencode) setAgentType('opencode');
 
                 // Sync active profile to CLI
                 profileSyncService.setActiveProfile(selectedProfileId).catch(error => {
@@ -875,11 +881,23 @@ export function NewSessionWizard({ onComplete, onCancel, initialPrompt = '' }: N
         setSelectedProfileId(profile.id);
 
         // Auto-select agent type based on profile compatibility
-        if (profile.compatibility.claude && !profile.compatibility.codex) {
-            setAgentType('claude');
-        } else if (profile.compatibility.codex && !profile.compatibility.claude) {
-            setAgentType('codex');
-        }
+        const compat = profile.compatibility;
+        const onlyClaude = compat.claude && !compat.codex && !compat.gemini && !compat.opencode;
+        const onlyCodex = compat.codex && !compat.claude && !compat.gemini && !compat.opencode;
+        const onlyGemini = compat.gemini && !compat.claude && !compat.codex && !compat.opencode;
+        const onlyOpencode = compat.opencode && !compat.claude && !compat.codex && !compat.gemini;
+
+        let selectedAgentType: 'claude' | 'codex' | 'gemini' | 'opencode' = agentType;
+        if (onlyClaude) selectedAgentType = 'claude';
+        else if (onlyCodex) selectedAgentType = 'codex';
+        else if (onlyGemini) selectedAgentType = 'gemini';
+        else if (onlyOpencode) selectedAgentType = 'opencode';
+        else if (compat.claude) selectedAgentType = 'claude';
+        else if (compat.codex) selectedAgentType = 'codex';
+        else if (compat.gemini) selectedAgentType = 'gemini';
+        else if (compat.opencode) selectedAgentType = 'opencode';
+
+        setAgentType(selectedAgentType);
 
         // Get environment variables from profile (no user configuration)
         const environmentVariables = getProfileEnvironmentVariables(profile);
@@ -888,7 +906,7 @@ export function NewSessionWizard({ onComplete, onCancel, initialPrompt = '' }: N
         onComplete({
             sessionType,
             profileId: profile.id,
-            agentType: agentType || (profile.compatibility.claude ? 'claude' : 'codex'),
+            agentType: selectedAgentType,
             permissionMode,
             modelMode,
             machineId: selectedMachineId,
@@ -903,11 +921,16 @@ export function NewSessionWizard({ onComplete, onCancel, initialPrompt = '' }: N
         setSelectedProfileId(profile.id);
 
         // Auto-select agent type based on profile compatibility
-        if (profile.compatibility.claude && !profile.compatibility.codex) {
-            setAgentType('claude');
-        } else if (profile.compatibility.codex && !profile.compatibility.claude) {
-            setAgentType('codex');
-        }
+        const compat = profile.compatibility;
+        const onlyClaude = compat.claude && !compat.codex && !compat.gemini && !compat.opencode;
+        const onlyCodex = compat.codex && !compat.claude && !compat.gemini && !compat.opencode;
+        const onlyGemini = compat.gemini && !compat.claude && !compat.codex && !compat.opencode;
+        const onlyOpencode = compat.opencode && !compat.claude && !compat.codex && !compat.gemini;
+
+        if (onlyClaude) setAgentType('claude');
+        else if (onlyCodex) setAgentType('codex');
+        else if (onlyGemini) setAgentType('gemini');
+        else if (onlyOpencode) setAgentType('opencode');
 
         // If profile needs configuration, go to profileConfig step
         if (profileNeedsConfiguration(profile.id)) {
@@ -1556,6 +1579,76 @@ export function NewSessionWizard({ onComplete, onCancel, initialPrompt = '' }: N
                                 <Ionicons name="checkmark-circle" size={24} color={theme.colors.button.primary.background} />
                             )}
                         </Pressable>
+
+                        <Pressable
+                            style={[
+                                styles.agentOption,
+                                agentType === 'gemini' ? styles.agentOptionSelected : styles.agentOptionUnselected,
+                                selectedProfileId && !allProfiles.find(p => p.id === selectedProfileId)?.compatibility.gemini && {
+                                    opacity: 0.5,
+                                    backgroundColor: theme.colors.surface
+                                }
+                            ]}
+                            onPress={() => {
+                                if (!selectedProfileId || allProfiles.find(p => p.id === selectedProfileId)?.compatibility.gemini) {
+                                    setAgentType('gemini');
+                                }
+                            }}
+                            disabled={!!(selectedProfileId && !allProfiles.find(p => p.id === selectedProfileId)?.compatibility.gemini)}
+                        >
+                            <View style={styles.agentIcon}>
+                                <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold' }}>G</Text>
+                            </View>
+                            <View style={styles.agentInfo}>
+                                <Text style={styles.agentName}>Gemini</Text>
+                                <Text style={styles.agentDescription}>
+                                    Google's advanced AI coding assistant
+                                </Text>
+                                {selectedProfileId && !allProfiles.find(p => p.id === selectedProfileId)?.compatibility.gemini && (
+                                    <Text style={{ fontSize: 12, color: theme.colors.textDestructive, marginTop: 4 }}>
+                                        Not compatible with selected profile
+                                    </Text>
+                                )}
+                            </View>
+                            {agentType === 'gemini' && (
+                                <Ionicons name="checkmark-circle" size={24} color={theme.colors.button.primary.background} />
+                            )}
+                        </Pressable>
+
+                        <Pressable
+                            style={[
+                                styles.agentOption,
+                                agentType === 'opencode' ? styles.agentOptionSelected : styles.agentOptionUnselected,
+                                selectedProfileId && !allProfiles.find(p => p.id === selectedProfileId)?.compatibility.opencode && {
+                                    opacity: 0.5,
+                                    backgroundColor: theme.colors.surface
+                                }
+                            ]}
+                            onPress={() => {
+                                if (!selectedProfileId || allProfiles.find(p => p.id === selectedProfileId)?.compatibility.opencode) {
+                                    setAgentType('opencode');
+                                }
+                            }}
+                            disabled={!!(selectedProfileId && !allProfiles.find(p => p.id === selectedProfileId)?.compatibility.opencode)}
+                        >
+                            <View style={styles.agentIcon}>
+                                <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold' }}>O</Text>
+                            </View>
+                            <View style={styles.agentInfo}>
+                                <Text style={styles.agentName}>OpenCode</Text>
+                                <Text style={styles.agentDescription}>
+                                    Open-source AI coding assistant with multi-model support
+                                </Text>
+                                {selectedProfileId && !allProfiles.find(p => p.id === selectedProfileId)?.compatibility.opencode && (
+                                    <Text style={{ fontSize: 12, color: theme.colors.textDestructive, marginTop: 4 }}>
+                                        Not compatible with selected profile
+                                    </Text>
+                                )}
+                            </View>
+                            {agentType === 'opencode' && (
+                                <Ionicons name="checkmark-circle" size={24} color={theme.colors.button.primary.background} />
+                            )}
+                        </Pressable>
                     </View>
                 );
 
@@ -1592,11 +1685,16 @@ export function NewSessionWizard({ onComplete, onCancel, initialPrompt = '' }: N
                             </View>
                         )}
                         <ItemGroup title="Permission Mode">
-                            {([
+                            {(agentType === 'claude' ? [
                                 { value: 'default', label: 'Default', description: 'Ask for permissions', icon: 'shield-outline' },
                                 { value: 'acceptEdits', label: 'Accept Edits', description: 'Auto-approve edits', icon: 'checkmark-outline' },
                                 { value: 'plan', label: 'Plan', description: 'Plan before executing', icon: 'list-outline' },
                                 { value: 'bypassPermissions', label: 'Bypass Permissions', description: 'Skip all permissions', icon: 'flash-outline' },
+                            ] as const : [
+                                { value: 'default', label: 'Default', description: 'Ask for permissions', icon: 'shield-outline' },
+                                { value: 'read-only', label: 'Read Only', description: 'Only allow read operations', icon: 'eye-outline' },
+                                { value: 'safe-yolo', label: 'Safe YOLO', description: 'Auto-approve safe operations', icon: 'checkmark-outline' },
+                                { value: 'yolo', label: 'YOLO', description: 'Auto-approve everything', icon: 'flash-outline' },
                             ] as const).map((option, index, array) => (
                                 <Item
                                     key={option.value}
@@ -1630,6 +1728,16 @@ export function NewSessionWizard({ onComplete, onCancel, initialPrompt = '' }: N
                                 { value: 'adaptiveUsage', label: 'Adaptive Usage', description: 'Automatically choose model', icon: 'analytics-outline' },
                                 { value: 'sonnet', label: 'Sonnet', description: 'Fast and efficient', icon: 'speedometer-outline' },
                                 { value: 'opus', label: 'Opus', description: 'Most capable model', icon: 'diamond-outline' },
+                            ] as const : agentType === 'gemini' ? [
+                                { value: 'default', label: 'Default', description: 'Balanced performance', icon: 'cube-outline' },
+                                { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: 'Most capable Gemini model', icon: 'diamond-outline' },
+                                { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', description: 'Fast and efficient', icon: 'speedometer-outline' },
+                            ] as const : agentType === 'opencode' ? [
+                                { value: 'default', label: 'Default', description: 'Use configured model', icon: 'cube-outline' },
+                                { value: 'claude-sonnet', label: 'Claude Sonnet', description: 'Anthropic Sonnet model', icon: 'speedometer-outline' },
+                                { value: 'claude-opus', label: 'Claude Opus', description: 'Anthropic Opus model', icon: 'diamond-outline' },
+                                { value: 'gpt-4o', label: 'GPT-4o', description: 'OpenAI GPT-4o model', icon: 'cube-outline' },
+                                { value: 'gemini-pro', label: 'Gemini Pro', description: 'Google Gemini Pro', icon: 'cube-outline' },
                             ] as const : [
                                 { value: 'gpt-5-codex-high', label: 'GPT-5 Codex High', description: 'Best for complex coding', icon: 'diamond-outline' },
                                 { value: 'gpt-5-codex-medium', label: 'GPT-5 Codex Medium', description: 'Balanced coding assistance', icon: 'cube-outline' },
