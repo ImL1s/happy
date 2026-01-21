@@ -1,0 +1,67 @@
+name: Build Android APK
+
+on:
+    release:
+        types: [published]
+    workflow_dispatch:
+        inputs:
+            upload_to_release:
+                description: 'Upload APK to latest release'
+                required: false
+                default: 'false'
+                type: boolean
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: yarn
+
+            - name: Setup Java
+              uses: actions/setup-java@v4
+              with:
+                  distribution: 'temurin'
+                  java-version: '17'
+
+            - name: Setup Android SDK
+              uses: android-actions/setup-android@v3
+
+            - name: Install dependencies
+              run: yarn install --frozen-lockfile
+
+            - name: Generate native project
+              run: yarn prebuild
+              env:
+                  APP_ENV: preview
+
+            - name: Build APK
+              working-directory: android
+              run: ./gradlew assembleDebug
+
+            - name: Rename APK
+              run: |
+                  mkdir -p artifacts
+                  cp android/app/build/outputs/apk/debug/app-debug.apk artifacts/happy-${{ github.ref_name }}.apk
+
+            - name: Upload APK artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: happy-apk
+                  path: artifacts/happy-${{ github.ref_name }}.apk
+
+            - name: Upload APK to Release
+              if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.upload_to_release == 'true')
+              uses: softprops/action-gh-release@v2
+              with:
+                  files: artifacts/happy-${{ github.ref_name }}.apk
+                  tag_name: ${{ github.ref_name }}
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
