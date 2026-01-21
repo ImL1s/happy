@@ -19,9 +19,14 @@ export const MetadataSchema = z.object({
     tools: z.array(z.string()).optional(),
     slashCommands: z.array(z.string()).optional(),
     homeDir: z.string().optional(), // User's home directory on the machine
-    happyHomeDir: z.string().optional(), // Happy configuration directory 
+    happyHomeDir: z.string().optional(), // Happy configuration directory
     hostPid: z.number().optional(), // Process ID of the session
-    flavor: z.enum(['claude', 'codex', 'gemini', 'opencode']).nullish() // Session flavor/variant identifier
+    flavor: z.enum(['claude', 'codex', 'gemini', 'opencode']).nullish(), // Session flavor/variant identifier
+    // OpenCode connected providers for model availability display
+    connectedProviders: z.array(z.object({
+        name: z.string(),
+        type: z.enum(['api', 'oauth', 'env'])
+    })).optional()
 });
 
 export type Metadata = z.infer<typeof MetadataSchema>;

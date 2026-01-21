@@ -112,12 +112,67 @@ const OPENCODE_MODELS = [
     { value: 'qwen/qwen3-max', label: 'Qwen3 Max', description: 'Alibaba' },
 ] as const;
 
-function getModelsForAgent(flavor: string | undefined) {
+/**
+ * Mapping from opencode auth list provider names to OPENCODE_MODELS description values
+ * Provider names from `opencode auth list` may not match exactly, so we use partial matching
+ */
+const PROVIDER_TO_DESCRIPTION_MAP: Record<string, string[]> = {
+    'opencode zen': ['OpenCode Zen'],
+    'github copilot': ['GitHub Copilot'],
+    'anthropic': ['Anthropic'],
+    'openai': ['OpenAI'],
+    'google': ['Google', 'Antigravity'],
+    'vertex': ['Google', 'Antigravity'],
+    'xai': ['xAI'],
+    'deepseek': ['DeepSeek'],
+    'alibaba': ['Alibaba'],
+    'qwen': ['Alibaba'],
+};
+
+/**
+ * Get models for the specified agent flavor, optionally sorted by connected providers
+ */
+function getModelsForAgent(
+    flavor: string | undefined,
+    connectedProviders?: Array<{ name: string; type: 'api' | 'oauth' | 'env' }>
+) {
     switch (flavor) {
         case 'claude': return CLAUDE_MODELS;
         case 'codex': return CODEX_MODELS;
         case 'gemini': return GEMINI_MODELS;
-        case 'opencode': return OPENCODE_MODELS;
+        case 'opencode': {
+            // If no connected providers info, return models as-is
+            if (!connectedProviders || connectedProviders.length === 0) {
+                return OPENCODE_MODELS;
+            }
+
+            // Build set of connected description values
+            const connectedDescriptions = new Set<string>();
+            for (const provider of connectedProviders) {
+                const providerNameLower = provider.name.toLowerCase();
+                for (const [key, descriptions] of Object.entries(PROVIDER_TO_DESCRIPTION_MAP)) {
+                    if (providerNameLower.includes(key)) {
+                        descriptions.forEach(d => connectedDescriptions.add(d));
+                    }
+                }
+            }
+
+            // Sort models: 'auto' first, then connected providers, then rest
+            const sorted = [...OPENCODE_MODELS].sort((a, b) => {
+                // 'auto' always first
+                if (a.value === 'auto') return -1;
+                if (b.value === 'auto') return 1;
+
+                const aConnected = connectedDescriptions.has(a.description.replace(' (Free)', ''));
+                const bConnected = connectedDescriptions.has(b.description.replace(' (Free)', ''));
+
+                if (aConnected && !bConnected) return -1;
+                if (!aConnected && bConnected) return 1;
+                return 0;
+            });
+
+            return sorted;
+        }
         default: return CLAUDE_MODELS;
     }
 }
@@ -406,7 +461,7 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
 
     // Get current flavor for model selection
     const currentFlavor = props.metadata?.flavor || props.agentType || 'claude';
-    const modelOptions = getModelsForAgent(currentFlavor);
+    const modelOptions = getModelsForAgent(currentFlavor, props.metadata?.connectedProviders);
 
     // Profile data
     const profiles = useSetting('profiles');
