@@ -667,6 +667,16 @@ export const knownTools = {
                 }
                 return fullTitle;
             }
+            // Check for command in various formats
+            if (opts.tool.input?.command && typeof opts.tool.input.command === 'string') {
+                return opts.tool.input.command.length > 30
+                    ? opts.tool.input.command.substring(0, 30) + '...'
+                    : opts.tool.input.command;
+            }
+            // MCP tool with description
+            if (opts.tool.description && typeof opts.tool.description === 'string') {
+                return opts.tool.description;
+            }
             return t('tools.names.terminal');
         },
         icon: ICON_TERMINAL,
@@ -680,6 +690,17 @@ export const knownTools = {
                 if (parenMatch) {
                     return parenMatch[1];
                 }
+            }
+            // Show command if available
+            if (opts.tool.input?.command && typeof opts.tool.input.command === 'string') {
+                return opts.tool.input.command;
+            }
+            // For MCP tools with locations (like BigQuery), show something meaningful
+            if (opts.tool.input?.locations && Array.isArray(opts.tool.input.locations)) {
+                if (opts.tool.input.locations.length === 0) {
+                    return 'No locations specified';
+                }
+                return `${opts.tool.input.locations.length} location(s)`;
             }
             return null;
         }
