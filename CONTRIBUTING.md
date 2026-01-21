@@ -306,3 +306,78 @@ The `cross-env` package ensures this works cross-platform:
 ```
 
 Cross-platform via `cross-env` - works identically on Windows, macOS, and Linux!
+
+## Fork 維護與分支策略
+
+這個 repo 是從 [slopus/happy](https://github.com/slopus/happy) fork 來的。我們需要長期維護自己的更改，同時保持與上游同步。
+
+### 分支結構
+
+```
+upstream/main  ←────── 上游（slopus/happy）
+     ↓ fetch
+   main        ←────── 只追蹤上游（不要在這裡開發）
+     ↓ merge/rebase
+   dev         ←────── 我們的「主線」，包含所有本地更改
+     ↓ branch
+feature/xxx    ←────── 新功能開發
+```
+
+### 日常開發流程
+
+```bash
+# 1. 從 dev 創建 feature branch
+git checkout dev
+git checkout -b feature/my-new-feature
+
+# 2. 開發完成後，直接 merge 到 dev（不需要開 PR）
+git checkout dev
+git merge feature/my-new-feature
+git push origin dev
+
+# 3. 刪除 feature branch
+git branch -d feature/my-new-feature
+```
+
+### 同步上游更改
+
+```bash
+# 1. 拉取上游最新
+git fetch upstream
+
+# 2. 更新本地 main
+git checkout main
+git merge upstream/main
+git push origin main
+
+# 3. 把上游更改帶入 dev
+git checkout dev
+git rebase main        # 或 merge，看偏好
+git push origin dev --force-with-lease  # 如果用 rebase
+```
+
+### 向上游提交 PR
+
+如果某個功能想貢獻回上游：
+
+```bash
+# 從 main 創建乾淨的分支
+git checkout main
+git checkout -b pr/feature-for-upstream
+
+# Cherry-pick 需要的 commits
+git cherry-pick <commit-hash>
+
+# Push 並到 GitHub 開 PR
+git push origin pr/feature-for-upstream
+# 然後到 GitHub 向 slopus/happy 開 PR
+```
+
+### 為什麼這樣設計？
+
+| 分支 | 用途 |
+|------|------|
+| `main` | 乾淨追蹤上游，方便同步和提 PR |
+| `dev` | 我們的主線，累積所有本地更改 |
+| `feature/*` | 短期功能分支，開發完就刪 |
+| `pr/*` | 專門用於向上游提 PR 的分支 |
