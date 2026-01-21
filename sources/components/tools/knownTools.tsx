@@ -656,7 +656,7 @@ export const knownTools = {
     },
     'execute': {
         title: (opts: { metadata: Metadata | null, tool: ToolCall }) => {
-            // Gemini sends nice title in toolCall.title
+            // Gemini sends nice title in toolCall.title for shell commands
             if (opts.tool.input?.toolCall?.title) {
                 // Title is like "rm file.txt [cwd /path] (description)"
                 // Extract just the command part before [
@@ -667,7 +667,7 @@ export const knownTools = {
                 }
                 return fullTitle;
             }
-            // Check for command in various formats
+            // Check for command in various formats (shell command)
             if (opts.tool.input?.command && typeof opts.tool.input.command === 'string') {
                 return opts.tool.input.command.length > 30
                     ? opts.tool.input.command.substring(0, 30) + '...'
@@ -677,9 +677,15 @@ export const knownTools = {
             if (opts.tool.description && typeof opts.tool.description === 'string') {
                 return opts.tool.description;
             }
-            return t('tools.names.terminal');
+            // If no shell-related fields, this might be an MCP tool using 'execute' name
+            // Show generic "Execute" instead of "Terminal" to avoid confusion
+            return 'Execute';
         },
-        icon: ICON_TERMINAL,
+        icon: (size: number = 24, color: string = '#000') => {
+            // Dynamically choose icon - but we can't access opts here
+            // So just use terminal icon as default
+            return <Octicons name="terminal" size={size} color={color} />;
+        },
         isMutable: true,
         input: z.object({}).partial().loose(),
         extractSubtitle: (opts: { metadata: Metadata | null, tool: ToolCall }) => {
@@ -696,11 +702,13 @@ export const knownTools = {
                 return opts.tool.input.command;
             }
             // For MCP tools with locations (like BigQuery), show something meaningful
-            if (opts.tool.input?.locations && Array.isArray(opts.tool.input.locations)) {
-                if (opts.tool.input.locations.length === 0) {
-                    return 'No locations specified';
+            if (opts.tool.input?.locations !== undefined) {
+                if (Array.isArray(opts.tool.input.locations) && opts.tool.input.locations.length === 0) {
+                    return 'MCP Tool';
                 }
-                return `${opts.tool.input.locations.length} location(s)`;
+                if (Array.isArray(opts.tool.input.locations)) {
+                    return `${opts.tool.input.locations.length} location(s)`;
+                }
             }
             return null;
         }
