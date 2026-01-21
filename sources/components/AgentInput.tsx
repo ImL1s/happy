@@ -56,12 +56,17 @@ const OPENCODE_MODELS = [
     { value: 'opencode/gpt-5.1-codex', label: 'GPT-5.1 Codex', description: 'OpenCode' },
     // Antigravity plugin (extended context via Google infra)
     { value: 'google/antigravity-gemini-3-flash', label: 'Antigravity Gemini 3', description: 'Antigravity Plugin' },
-    { value: 'google/antigravity-claude-sonnet-4-5', label: 'Antigravity Claude Sonnet', description: 'Antigravity Plugin' },
+    { value: 'google/antigravity-claude-sonnet-4-5', label: 'Antigravity Claude Sonnet 4.5', description: 'Antigravity Plugin' },
+    { value: 'google/antigravity-claude-opus-4-5', label: 'Antigravity Claude Opus 4.5', description: 'Antigravity Plugin' },
     { value: 'google/antigravity-claude-sonnet-4-5-thinking', label: 'Antigravity Claude Thinking', description: 'Antigravity Plugin' },
     // GitHub Copilot provider
     { value: 'github-copilot/claude-sonnet-4.5', label: 'Claude Sonnet 4.5', description: 'GitHub Copilot' },
+    { value: 'github-copilot/claude-opus-4.5', label: 'Claude Opus 4.5', description: 'GitHub Copilot' },
     { value: 'github-copilot/gpt-5.1-codex', label: 'GPT-5.1 Codex', description: 'GitHub Copilot' },
+    { value: 'github-copilot/gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: 'GitHub Copilot' },
+    { value: 'github-copilot/gemini-2.5-flash', label: 'Gemini 2.5 Flash', description: 'GitHub Copilot' },
     // Google provider
+    { value: 'google/gemini-3-pro', label: 'Gemini 3 Pro', description: 'Google' },
     { value: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: 'Google' },
     { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash', description: 'Google' },
 ] as const;
