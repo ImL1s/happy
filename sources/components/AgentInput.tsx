@@ -49,26 +49,67 @@ const GEMINI_MODELS = [
 const OPENCODE_MODELS = [
     // Auto
     { value: 'auto', label: 'Auto', description: 'Auto-select best model' },
-    // OpenCode native models
-    { value: 'opencode/claude-sonnet-4-5', label: 'Claude Sonnet 4.5', description: 'OpenCode' },
-    { value: 'opencode/claude-opus-4-5', label: 'Claude Opus 4.5', description: 'OpenCode' },
-    { value: 'opencode/gemini-3-flash', label: 'Gemini 3 Flash', description: 'OpenCode' },
-    { value: 'opencode/gpt-5.1-codex', label: 'GPT-5.1 Codex', description: 'OpenCode' },
-    // Antigravity plugin (extended context via Google infra)
-    { value: 'google/antigravity-gemini-3-flash', label: 'Antigravity Gemini 3', description: 'Antigravity Plugin' },
-    { value: 'google/antigravity-claude-sonnet-4-5', label: 'Antigravity Claude Sonnet 4.5', description: 'Antigravity Plugin' },
-    { value: 'google/antigravity-claude-opus-4-5', label: 'Antigravity Claude Opus 4.5', description: 'Antigravity Plugin' },
-    { value: 'google/antigravity-claude-sonnet-4-5-thinking', label: 'Antigravity Claude Thinking', description: 'Antigravity Plugin' },
-    // GitHub Copilot provider
+
+    // === OpenCode Zen (curated & tested for coding) ===
+    { value: 'opencode/claude-sonnet-4-5', label: 'Claude Sonnet 4.5', description: 'OpenCode Zen' },
+    { value: 'opencode/claude-opus-4-5', label: 'Claude Opus 4.5', description: 'OpenCode Zen' },
+    { value: 'opencode/gpt-5.2-codex', label: 'GPT-5.2 Codex', description: 'OpenCode Zen' },
+    { value: 'opencode/gpt-5.1-codex', label: 'GPT-5.1 Codex', description: 'OpenCode Zen' },
+    { value: 'opencode/gemini-3-pro', label: 'Gemini 3 Pro', description: 'OpenCode Zen' },
+    { value: 'opencode/gemini-3-flash', label: 'Gemini 3 Flash', description: 'OpenCode Zen' },
+    { value: 'opencode/minimax-m2.1', label: 'MiniMax M2.1', description: 'OpenCode Zen' },
+    { value: 'opencode/glm-4.7', label: 'GLM-4.7', description: 'OpenCode Zen' },
+    { value: 'opencode/glm-4.6', label: 'GLM-4.6', description: 'OpenCode Zen' },
+    { value: 'opencode/big-pickle', label: 'Big Pickle', description: 'OpenCode Zen (Free)' },
+    { value: 'opencode/grok-code-fast-1', label: 'Grok Code Fast 1', description: 'OpenCode Zen' },
+    { value: 'opencode/kimi-k2-instruct', label: 'Kimi K2 Instruct', description: 'OpenCode Zen' },
+
+    // === Antigravity Plugin (extended context via Google infra) ===
+    { value: 'google/antigravity-claude-sonnet-4-5', label: 'Claude Sonnet 4.5', description: 'Antigravity' },
+    { value: 'google/antigravity-claude-opus-4-5', label: 'Claude Opus 4.5', description: 'Antigravity' },
+    { value: 'google/antigravity-claude-sonnet-4-5-thinking', label: 'Claude Thinking', description: 'Antigravity' },
+    { value: 'google/antigravity-gemini-3-flash', label: 'Gemini 3 Flash', description: 'Antigravity' },
+    { value: 'google/antigravity-gemini-3-pro', label: 'Gemini 3 Pro', description: 'Antigravity' },
+
+    // === GitHub Copilot ===
     { value: 'github-copilot/claude-sonnet-4.5', label: 'Claude Sonnet 4.5', description: 'GitHub Copilot' },
     { value: 'github-copilot/claude-opus-4.5', label: 'Claude Opus 4.5', description: 'GitHub Copilot' },
     { value: 'github-copilot/gpt-5.1-codex', label: 'GPT-5.1 Codex', description: 'GitHub Copilot' },
+    { value: 'github-copilot/gpt-4o', label: 'GPT-4o', description: 'GitHub Copilot' },
+    { value: 'github-copilot/o3-mini', label: 'o3-mini', description: 'GitHub Copilot' },
     { value: 'github-copilot/gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: 'GitHub Copilot' },
     { value: 'github-copilot/gemini-2.5-flash', label: 'Gemini 2.5 Flash', description: 'GitHub Copilot' },
-    // Google provider
+
+    // === Anthropic (Direct) ===
+    { value: 'anthropic/claude-sonnet-4-5', label: 'Claude Sonnet 4.5', description: 'Anthropic' },
+    { value: 'anthropic/claude-opus-4-5', label: 'Claude Opus 4.5', description: 'Anthropic' },
+    { value: 'anthropic/claude-haiku-4-5', label: 'Claude Haiku 4.5', description: 'Anthropic' },
+
+    // === OpenAI (Direct) ===
+    { value: 'openai/gpt-5', label: 'GPT-5', description: 'OpenAI' },
+    { value: 'openai/gpt-5.1', label: 'GPT-5.1', description: 'OpenAI' },
+    { value: 'openai/gpt-5.2', label: 'GPT-5.2', description: 'OpenAI' },
+    { value: 'openai/gpt-4o', label: 'GPT-4o', description: 'OpenAI' },
+    { value: 'openai/o3', label: 'o3', description: 'OpenAI' },
+    { value: 'openai/o3-mini', label: 'o3-mini', description: 'OpenAI' },
+    { value: 'openai/o4-mini', label: 'o4-mini', description: 'OpenAI' },
+
+    // === Google (Direct) ===
     { value: 'google/gemini-3-pro', label: 'Gemini 3 Pro', description: 'Google' },
     { value: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: 'Google' },
     { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash', description: 'Google' },
+
+    // === xAI ===
+    { value: 'xai/grok-3', label: 'Grok 3', description: 'xAI' },
+    { value: 'xai/grok-3-fast', label: 'Grok 3 Fast', description: 'xAI' },
+
+    // === DeepSeek ===
+    { value: 'deepseek/deepseek-r1', label: 'DeepSeek R1', description: 'DeepSeek' },
+    { value: 'deepseek/deepseek-v3', label: 'DeepSeek V3', description: 'DeepSeek' },
+
+    // === Alibaba (Qwen) ===
+    { value: 'qwen/qwen3-coder', label: 'Qwen3 Coder', description: 'Alibaba' },
+    { value: 'qwen/qwen3-max', label: 'Qwen3 Max', description: 'Alibaba' },
 ] as const;
 
 function getModelsForAgent(flavor: string | undefined) {
